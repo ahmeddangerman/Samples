@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Collection</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header id="app-header">
+    <div class="header-left">
+      <span class="header-icon">&#x1F3AE;</span>
+      <h1>Game Collection</h1>
+    </div>
+    <div class="header-right">
+      <button id="btn-export" class="btn btn-secondary">Export CSV</button>
+      <button id="btn-add" class="btn btn-primary">+ Add Game</button>
+    </div>
+  </header>
+
+  <div id="api-key-banner" class="api-key-banner hidden">
+    <span>RAWG API key not set. Enter it to enable game autocomplete:</span>
+    <input type="text" id="api-key-input" placeholder="Paste your RAWG API key..." />
+    <button id="btn-save-key" class="btn btn-small">Save</button>
+    <a href="https://rawg.io/apiv2" target="_blank" rel="noopener">Get a free key</a>
+    <button id="btn-dismiss-banner" class="btn-icon" title="Dismiss">&times;</button>
+  </div>
+
+  <div id="filter-bar">
+    <div class="filter-controls">
+      <select id="filter-platform">
+        <option value="">All Platforms</option>
+        <option value="PC">PC</option>
+        <option value="PS5">PS5</option>
+        <option value="PS4">PS4</option>
+        <option value="Xbox Series X">Xbox Series X</option>
+        <option value="Xbox One">Xbox One</option>
+        <option value="Nintendo Switch">Nintendo Switch</option>
+        <option value="Other">Other</option>
+      </select>
+      <select id="filter-status">
+        <option value="">All Statuses</option>
+        <option value="Not Started">Not Started</option>
+        <option value="Playing">Playing</option>
+        <option value="Completed">Completed</option>
+        <option value="Dropped">Dropped</option>
+      </select>
+      <input type="text" id="filter-search" placeholder="Search games..." />
+    </div>
+    <span id="game-count" class="game-count">0 games</span>
+  </div>
+
+  <main id="library">
+    <div id="empty-state" class="empty-state hidden">
+      <div class="empty-icon">&#x1F3AE;</div>
+      <h2>No games yet</h2>
+      <p>Add your first game to start building your collection.</p>
+      <button class="btn btn-primary" id="btn-add-empty">+ Add Game</button>
+    </div>
+    <div id="game-grid" class="game-grid"></div>
+  </main>
+
+  <!-- Add / Edit Modal -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <h2 id="modal-title">Add Game</h2>
+        <button id="btn-close-modal" class="btn-icon" title="Close">&times;</button>
+      </div>
+
+      <form id="game-form" novalidate>
+        <input type="hidden" id="form-id" />
+
+        <div class="form-row">
+          <div class="form-group form-group-title">
+            <label for="form-title">Title <span class="required">*</span></label>
+            <div class="title-wrap">
+              <input type="text" id="form-title" placeholder="Search or enter title..." autocomplete="off" />
+              <div id="rawg-autocomplete" class="rawg-autocomplete hidden"></div>
+            </div>
+            <span id="rawg-error" class="field-error hidden"></span>
+          </div>
+
+          <div class="form-group form-group-cover-preview">
+            <label>Cover Preview</label>
+            <div id="cover-preview" class="cover-preview">
+              <span class="cover-placeholder">No cover</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="form-platform">Platform</label>
+            <select id="form-platform">
+              <option value="PC">PC</option>
+              <option value="PS5">PS5</option>
+              <option value="PS4">PS4</option>
+              <option value="Xbox Series X">Xbox Series X</option>
+              <option value="Xbox One">Xbox One</option>
+              <option value="Nintendo Switch">Nintendo Switch</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="form-status">Status</label>
+            <select id="form-status">
+              <option value="Not Started">Not Started</option>
+              <option value="Playing">Playing</option>
+              <option value="Completed">Completed</option>
+              <option value="Dropped">Dropped</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="form-rating">Rating (0 = Unrated)</label>
+            <input type="number" id="form-rating" min="0" max="10" value="0" />
+          </div>
+
+          <div class="form-group">
+            <label for="form-release-year">Release Year</label>
+            <input type="number" id="form-release-year" min="1950" max="2100" placeholder="e.g. 2022" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="form-genres">Genres <span class="hint">(comma-separated)</span></label>
+          <input type="text" id="form-genres" placeholder="e.g. RPG, Action, Adventure" />
+        </div>
+
+        <div class="form-group">
+          <label for="form-cover-url">Cover Art URL</label>
+          <input type="url" id="form-cover-url" placeholder="https://..." />
+        </div>
+
+        <div class="form-group">
+          <label for="form-notes">Notes / Review</label>
+          <textarea id="form-notes" rows="3" placeholder="Your thoughts..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="btn-cancel" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="btn-save" class="btn btn-primary">Save Game</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="storage.js"></script>
+  <script src="rawg.js"></script>
+  <script src="export.js"></script>
+  <script src="ui.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
