@@ -20,6 +20,7 @@ import phrasesRouter from './routes/phrases.js';
 import cardsRouter from './routes/cards.js';
 import statsRouter from './routes/stats.js';
 import importRouter from './routes/import.js';
+import challengeRouter from './routes/challenge.js';
 
 const app = express();
 app.use(express.json());
@@ -32,6 +33,7 @@ app.use('/api', phrasesRouter);
 app.use('/api', cardsRouter);
 app.use('/api', statsRouter);
 app.use('/api', importRouter);
+app.use('/api', challengeRouter);
 
 app.get('/api/settings', (_req, res) => {
   const rows = db.prepare('SELECT key, value FROM settings').all();

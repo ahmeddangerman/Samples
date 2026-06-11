@@ -11,6 +11,7 @@ function navigate(view) {
   document.querySelectorAll(`[data-view="${view}"]`).forEach(b => b.classList.add('active'));
 
   currentView = view;
+  if (view === 'challenge') loadChallenge();
   if (view === 'review') loadReview();
   if (view === 'library') loadLibrary();
   if (view === 'stats') loadStats();
@@ -41,6 +42,218 @@ async function api(method, path, body) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
+}
+
+// ── Challenge view ────────────────────────────────────────────────────────────
+
+let challengeStatus = null;
+
+async function loadChallenge() {
+  const el = document.getElementById('challenge-content');
+  el.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
+  try {
+    challengeStatus = await api('GET', '/challenge/status');
+    renderChallengeView();
+  } catch (err) {
+    el.innerHTML = `<div class="text-red-400 text-sm">${err.message}</div>`;
+  }
+}
+
+function renderChallengeView() {
+  const el = document.getElementById('challenge-content');
+  const s = challengeStatus;
+
+  if (!s.started) {
+    el.innerHTML = `
+      <div class="max-w-lg mx-auto text-center py-10">
+        <div class="text-6xl mb-4">🇷🇺</div>
+        <h2 class="text-2xl font-bold text-white mb-2">30-Day Russian Speaking Challenge</h2>
+        <p class="text-gray-400 mb-2">30 days. 30 topics. Speak Russian every day.</p>
+        <p class="text-gray-500 text-sm mb-8">Each day you'll get 6 phrases to hear aloud and repeat. Mark them done and complete the day. Build a real streak.</p>
+        <button class="primary text-base px-8 py-3" onclick="doStartChallenge()">Begin Challenge</button>
+      </div>`;
+    return;
+  }
+
+  const { currentDay, topic, completionGrid, todayPhrases, isCompleted, totalCompleted } = s;
+  const practicedCount = todayPhrases.filter(p => p.repsToday > 0).length;
+  const allPracticed = practicedCount >= todayPhrases.length;
+  const isDay30Done = currentDay === 30 && isCompleted;
+
+  // Progress grid (30 circles)
+  const gridDots = completionGrid.map((done, i) => {
+    const day = i + 1;
+    const isToday = day === currentDay;
+    let cls, label;
+    if (done) {
+      cls = 'bg-green-500 border-green-500';
+      label = '✓';
+    } else if (isToday) {
+      cls = 'bg-orange-500 border-orange-500 ring-2 ring-orange-300';
+      label = day;
+    } else {
+      cls = 'bg-gray-800 border-gray-700 text-gray-600';
+      label = day;
+    }
+    return `<div class="w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold ${cls}" title="Day ${day}">${label}</div>`;
+  }).join('');
+
+  // Phrase cards
+  const phraseCards = todayPhrases.map(p => {
+    const reps = p.repsToday;
+    const done = reps > 0;
+    const mastered = reps >= 3;
+    const cardBorder = mastered ? 'border-green-600' : done ? 'border-blue-700' : 'border-gray-800';
+    const btnLabel = mastered ? `Mastered ✓ (${reps})` : done ? `Said it (${reps})` : 'Said it';
+    const btnCls = mastered ? 'bg-green-700 border-green-600 text-white' : done ? 'bg-blue-800 border-blue-700 text-white' : 'ghost';
+
+    return `
+      <div class="bg-gray-900 border ${cardBorder} rounded-xl p-4 transition-colors">
+        <p class="ru text-3xl text-white leading-snug mb-1">${esc(p.russian)}</p>
+        <p class="text-gray-300 text-sm mb-1">${esc(p.english)}</p>
+        ${p.breakdown ? `<p class="text-gray-600 text-xs mb-3">${esc(p.breakdown)}</p>` : '<div class="mb-3"></div>'}
+        <div class="flex gap-2">
+          <button class="ghost" onclick="challengeHear(${JSON.stringify(p.russian)})">🔊 Hear</button>
+          <button class="${btnCls} border rounded px-3 py-1.5 text-sm font-medium" onclick="challengeSaid(${currentDay}, ${p.index}, this)">${btnLabel}</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  const nextDayPreview = currentDay < 30
+    ? `<p class="text-gray-500 text-sm mt-2">Up next: Day ${currentDay + 1}</p>`
+    : '';
+
+  el.innerHTML = `
+    <div class="space-y-5">
+
+      <!-- Header -->
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 class="text-xl font-bold text-white">Day ${currentDay} / 30 — ${esc(topic)}</h2>
+          <p class="text-sm text-gray-400">${totalCompleted} day${totalCompleted !== 1 ? 's' : ''} completed</p>
+        </div>
+        <button class="ghost text-xs text-red-400 border-red-900" onclick="confirmRestartChallenge()">Restart</button>
+      </div>
+
+      <!-- Progress grid -->
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+        <p class="text-xs text-gray-500 mb-3 uppercase tracking-wide">30-Day Progress</p>
+        <div class="flex flex-wrap gap-1.5">${gridDots}</div>
+      </div>
+
+      ${isDay30Done ? `
+        <div class="bg-gray-900 border border-green-700 rounded-xl p-6 text-center">
+          <div class="text-5xl mb-3">🏆</div>
+          <h3 class="text-xl font-bold text-green-400 mb-1">Challenge Complete!</h3>
+          <p class="text-gray-400">You finished 30 days of Russian speaking practice. Молодец!</p>
+        </div>
+      ` : isCompleted ? `
+        <div class="bg-gray-900 border border-green-800 rounded-xl p-4 text-center">
+          <p class="text-green-400 font-semibold">Day ${currentDay} complete! ✓</p>
+          ${nextDayPreview}
+        </div>
+      ` : `
+        <!-- Speaking drills -->
+        <div>
+          <p class="text-sm font-medium text-gray-300 mb-3">Today's Speaking Drills
+            <span class="text-gray-500 font-normal ml-2">${practicedCount}/${todayPhrases.length} done</span>
+          </p>
+          <div class="space-y-3">${phraseCards}</div>
+        </div>
+
+        <button
+          id="complete-day-btn"
+          class="w-full py-3 rounded-xl font-semibold text-base transition-all ${allPracticed ? 'bg-orange-600 hover:bg-orange-500 text-white cursor-pointer' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}"
+          onclick="doCompleteDay()"
+          ${allPracticed ? '' : 'disabled'}
+        >${allPracticed ? `Complete Day ${currentDay} →` : `Practice all ${todayPhrases.length} phrases to complete`}</button>
+      `}
+
+    </div>`;
+}
+
+function challengeHear(russian) {
+  speakText(russian);
+}
+
+async function challengeSaid(dayNumber, phraseIndex, btn) {
+  try {
+    const { reps_done } = await api('POST', '/challenge/speak', {
+      day_number: dayNumber,
+      phrase_index: phraseIndex,
+    });
+
+    // Update the phrase's repsToday in local state
+    if (challengeStatus && challengeStatus.todayPhrases) {
+      challengeStatus.todayPhrases[phraseIndex].repsToday = reps_done;
+    }
+
+    // Update button appearance
+    const mastered = reps_done >= 3;
+    const done = reps_done > 0;
+    btn.textContent = mastered ? `Mastered ✓ (${reps_done})` : `Said it (${reps_done})`;
+    btn.className = mastered
+      ? 'bg-green-700 border-green-600 text-white border rounded px-3 py-1.5 text-sm font-medium'
+      : 'bg-blue-800 border-blue-700 text-white border rounded px-3 py-1.5 text-sm font-medium';
+
+    // Update card border
+    const card = btn.closest('.bg-gray-900');
+    if (card) {
+      card.classList.remove('border-gray-800', 'border-blue-700', 'border-green-600');
+      card.classList.add(mastered ? 'border-green-600' : 'border-blue-700');
+    }
+
+    // Recheck if all phrases are now practiced
+    const allPracticed = challengeStatus.todayPhrases.every(p => p.repsToday > 0);
+    const completeBtn = document.getElementById('complete-day-btn');
+    if (completeBtn) {
+      completeBtn.disabled = !allPracticed;
+      completeBtn.className = `w-full py-3 rounded-xl font-semibold text-base transition-all ${
+        allPracticed ? 'bg-orange-600 hover:bg-orange-500 text-white cursor-pointer' : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+      }`;
+      completeBtn.textContent = allPracticed
+        ? `Complete Day ${challengeStatus.currentDay} →`
+        : `Practice all ${challengeStatus.todayPhrases.length} phrases to complete`;
+    }
+
+    // Update progress counter
+    const practicedCount = challengeStatus.todayPhrases.filter(p => p.repsToday > 0).length;
+    const counterEl = document.querySelector('#challenge-content .text-gray-500.font-normal');
+    if (counterEl) counterEl.textContent = `${practicedCount}/${challengeStatus.todayPhrases.length} done`;
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+async function doStartChallenge() {
+  try {
+    await api('POST', '/challenge/start');
+    await loadChallenge();
+    toast('Challenge started! Day 1 begins now.');
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+async function doCompleteDay() {
+  try {
+    const { dayCompleted } = await api('POST', '/challenge/complete-day');
+    toast(`Day ${dayCompleted} complete! Keep going!`);
+    await loadChallenge();
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+async function confirmRestartChallenge() {
+  if (!confirm('Restart the 30-day challenge? All progress will be lost.')) return;
+  try {
+    await api('POST', '/challenge/start');
+    await loadChallenge();
+    toast('Challenge restarted from Day 1.');
+  } catch (err) {
+    toast(err.message);
+  }
 }
 
 // ── Translate view ────────────────────────────────────────────────────────────
@@ -517,6 +730,19 @@ async function exportData() {
     if (total > 0) {
       const badge = document.getElementById('due-badge');
       badge.textContent = total;
+      badge.classList.remove('hidden');
+    }
+  } catch {}
+
+  // Load challenge as the default landing view
+  await loadChallenge();
+
+  // Show challenge badge if active and today not yet completed
+  try {
+    const cs = await api('GET', '/challenge/status');
+    if (cs.started && !cs.isCompleted) {
+      const badge = document.getElementById('challenge-badge');
+      badge.textContent = `Day ${cs.currentDay}`;
       badge.classList.remove('hidden');
     }
   } catch {}

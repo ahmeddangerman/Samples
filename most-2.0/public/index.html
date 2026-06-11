@@ -17,7 +17,11 @@
     <h1 class="text-lg font-bold text-white mb-2">Мост 2.0</h1>
     <p class="text-xs text-gray-500 mb-6">Russian Companion</p>
     <nav class="flex flex-col gap-1">
-      <button class="nav-btn active" data-view="translate">Translate</button>
+      <button class="nav-btn active" data-view="challenge">
+        Challenge
+        <span id="challenge-badge" class="ml-auto text-xs bg-orange-500 text-white rounded-full px-1.5 py-0.5 hidden"></span>
+      </button>
+      <button class="nav-btn" data-view="translate">Translate</button>
       <button class="nav-btn" data-view="review">
         Review
         <span id="due-badge" class="ml-auto text-xs bg-blue-600 text-white rounded-full px-1.5 py-0.5 hidden"></span>
@@ -35,8 +39,13 @@
   <!-- Main content -->
   <main class="flex-1 overflow-y-auto pb-20 md:pb-4">
 
+    <!-- Challenge -->
+    <div id="view-challenge" class="view active p-4 md:p-6 max-w-2xl mx-auto">
+      <div id="challenge-content"></div>
+    </div>
+
     <!-- Translate -->
-    <div id="view-translate" class="view active p-4 md:p-6 max-w-2xl mx-auto">
+    <div id="view-translate" class="view p-4 md:p-6 max-w-2xl mx-auto">
       <h2 class="text-xl font-bold mb-4">Translate</h2>
 
       <div class="space-y-3 mb-4">
@@ -122,7 +131,11 @@
 
 <!-- Mobile bottom nav -->
 <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 flex z-10">
-  <button class="nav-btn-mobile flex-1 active" data-view="translate">
+  <button class="nav-btn-mobile flex-1 active" data-view="challenge">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    Challenge
+  </button>
+  <button class="nav-btn-mobile flex-1" data-view="translate">
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
     Translate
   </button>
@@ -137,10 +150,6 @@
   <button class="nav-btn-mobile flex-1" data-view="stats">
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
     Stats
-  </button>
-  <button class="nav-btn-mobile flex-1" data-view="settings">
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-    Settings
   </button>
 </nav>
 

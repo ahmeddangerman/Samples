@@ -67,6 +67,27 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS challenge (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    started_at TEXT NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1
+  );
+
+  CREATE TABLE IF NOT EXISTS challenge_completions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    day_number INTEGER NOT NULL UNIQUE,
+    completed_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS speaking_reps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    day_number INTEGER NOT NULL,
+    phrase_index INTEGER NOT NULL,
+    reps_done INTEGER NOT NULL DEFAULT 0,
+    practiced_at TEXT NOT NULL,
+    UNIQUE(day_number, phrase_index, practiced_at)
+  );
 `);
 
 export default db;
