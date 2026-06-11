@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мост 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+<div class="flex h-screen overflow-hidden">
+
+  <!-- Sidebar (desktop) -->
+  <aside class="hidden md:flex flex-col w-52 bg-gray-900 border-r border-gray-800 p-4 shrink-0">
+    <h1 class="text-lg font-bold text-white mb-2">Мост 2.0</h1>
+    <p class="text-xs text-gray-500 mb-6">Russian Companion</p>
+    <nav class="flex flex-col gap-1">
+      <button class="nav-btn active" data-view="translate">Translate</button>
+      <button class="nav-btn" data-view="review">
+        Review
+        <span id="due-badge" class="ml-auto text-xs bg-blue-600 text-white rounded-full px-1.5 py-0.5 hidden"></span>
+      </button>
+      <button class="nav-btn" data-view="library">Library</button>
+      <button class="nav-btn" data-view="stats">Stats</button>
+      <button class="nav-btn" data-view="import">Import</button>
+      <button class="nav-btn" data-view="settings">Settings</button>
+    </nav>
+    <div class="mt-auto">
+      <button onclick="exportData()" class="ghost w-full text-center text-xs">Export JSON</button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 overflow-y-auto pb-20 md:pb-4">
+
+    <!-- Translate -->
+    <div id="view-translate" class="view active p-4 md:p-6 max-w-2xl mx-auto">
+      <h2 class="text-xl font-bold mb-4">Translate</h2>
+
+      <div class="space-y-3 mb-4">
+        <textarea id="translate-input" rows="3" placeholder="Enter English or Arabic text..." class="resize-none"></textarea>
+
+        <div class="flex gap-2 items-center flex-wrap">
+          <select id="tone-select" class="w-auto flex-shrink-0">
+            <option value="tender">Tender</option>
+            <option value="playful">Playful</option>
+            <option value="neutral" selected>Neutral</option>
+            <option value="formal">Formal</option>
+            <option value="poetic">Poetic</option>
+          </select>
+          <button onclick="doTranslate()" class="primary" id="translate-btn">Translate</button>
+        </div>
+      </div>
+
+      <div id="translate-results" class="space-y-4"></div>
+    </div>
+
+    <!-- Review -->
+    <div id="view-review" class="view p-4 md:p-6 max-w-lg mx-auto">
+      <h2 class="text-xl font-bold mb-4">Review</h2>
+      <div id="review-queue-info" class="text-sm text-gray-400 mb-4"></div>
+      <div id="review-card-area"></div>
+    </div>
+
+    <!-- Library -->
+    <div id="view-library" class="view p-4 md:p-6 max-w-2xl mx-auto">
+      <h2 class="text-xl font-bold mb-4">Phrase Library</h2>
+
+      <div class="flex gap-2 mb-3">
+        <input id="lib-search" type="search" placeholder="Search phrases..." oninput="loadLibrary()">
+      </div>
+
+      <div id="lib-category-chips" class="flex flex-wrap gap-2 mb-4"></div>
+      <div id="library-list" class="space-y-2"></div>
+    </div>
+
+    <!-- Stats -->
+    <div id="view-stats" class="view p-4 md:p-6 max-w-2xl mx-auto">
+      <h2 class="text-xl font-bold mb-4">Stats</h2>
+      <div id="stats-content"></div>
+    </div>
+
+    <!-- Import -->
+    <div id="view-import" class="view p-4 md:p-6 max-w-2xl mx-auto">
+      <h2 class="text-xl font-bold mb-2">Import Conversation</h2>
+      <p class="text-sm text-gray-400 mb-4">Paste a chat export. Unknown Russian words will be extracted so you can add them to your deck.</p>
+      <textarea id="import-text" rows="8" placeholder="Paste chat text here..." class="mb-3 resize-none"></textarea>
+      <button onclick="doImport()" class="primary">Extract Words</button>
+      <div id="import-results" class="mt-4"></div>
+    </div>
+
+    <!-- Settings -->
+    <div id="view-settings" class="view p-4 md:p-6 max-w-lg mx-auto">
+      <h2 class="text-xl font-bold mb-4">Settings</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Default tone</label>
+          <select id="setting-default-tone">
+            <option value="tender">Tender</option>
+            <option value="playful">Playful</option>
+            <option value="neutral">Neutral</option>
+            <option value="formal">Formal</option>
+            <option value="poetic">Poetic</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Daily new cards cap</label>
+          <input id="setting-daily-cap" type="number" min="1" max="100" value="8">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">TTS voice</label>
+          <select id="setting-tts-voice"></select>
+        </div>
+        <button onclick="saveSettings()" class="primary">Save</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Mobile bottom nav -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 flex z-10">
+  <button class="nav-btn-mobile flex-1 active" data-view="translate">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+    Translate
+  </button>
+  <button class="nav-btn-mobile flex-1" data-view="review">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Review
+  </button>
+  <button class="nav-btn-mobile flex-1" data-view="library">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+    Library
+  </button>
+  <button class="nav-btn-mobile flex-1" data-view="stats">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    Stats
+  </button>
+  <button class="nav-btn-mobile flex-1" data-view="settings">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    Settings
+  </button>
+</nav>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>
