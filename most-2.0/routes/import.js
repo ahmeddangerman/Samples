@@ -3,24 +3,26 @@ import db from '../db.js';
 
 const router = Router();
 
+// Tokenise Russian text into individual words, lowercase, stripped of punctuation
+function tokenise(text) {
+  return [...text.matchAll(/[а-яёА-ЯЁa-zA-Z]+/gu)]
+    .map(m => m[0].toLowerCase());
+}
+
 router.post('/import/conversation', (req, res) => {
   const { text } = req.body;
   if (!text?.trim()) return res.status(400).json({ error: 'text is required' });
 
-  // Extract Cyrillic words from the pasted text
-  const matches = text.match(/[а-яёА-ЯЁ]+/g) || [];
-  const unique = [...new Set(matches.map(w => w.toLowerCase()))];
+  const tokens = [...new Set(tokenise(text))];
+  if (tokens.length === 0) return res.json({ unknown: [] });
 
-  // Find which ones are not already in the deck
   const known = new Set(
-    db.prepare('SELECT russian FROM cards').all().map(r => r.russian.toLowerCase())
+    db.prepare('SELECT russian FROM cards').all().map(c => c.russian.toLowerCase())
   );
 
-  const unknown = unique
-    .filter(w => !known.has(w) && w.length > 2)
-    .map(w => ({ russian: w, english: '' }));
+  const unknown = tokens.filter(t => !known.has(t) && /[а-яёА-ЯЁ]/u.test(t));
 
-  res.json({ unknown, total: unique.length, unknown_count: unknown.length });
+  res.json({ unknown });
 });
 
 export default router;
